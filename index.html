@@ -16,13 +16,14 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:#0b0b12;color:#fff;font-family:Inter,system-ui,sans-serif;overflow:hidden}
-#app{position:relative;height:100%;max-width:520px;margin:0 auto}
+#app{position:relative;height:100%;width:100%}
 .screen{position:absolute;inset:0;display:none;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
 .screen.on{display:flex}
 .logo{font-family:Anton,Impact,sans-serif;font-size:54px;line-height:.95;letter-spacing:1px;text-align:center;text-shadow:0 5px 0 rgba(0,0,0,.35)}
 .logo small{display:block;font-size:20px;letter-spacing:5px;opacity:.85}
 /* menu */
-#menu{background:#121218;padding:22px 16px;gap:16px;overflow-y:auto}
+#menu{background:#121218;padding:22px 16px;gap:16px;overflow-y:auto;align-items:center}
+#menu>*{width:100%;max-width:620px}
 #menu .logo{margin-top:8px}
 .logo .b{color:#3b74ff}.logo .r{color:#ff3b4e}
 h3{font-size:13px;letter-spacing:2px;opacity:.6;font-weight:900;margin-top:4px}
@@ -48,8 +49,8 @@ h3{font-size:13px;letter-spacing:2px;opacity:.6;font-weight:900;margin-top:4px}
 .side{flex:1;border-radius:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;overflow:hidden;transition:filter .2s,transform .15s;border:4px solid transparent}
 .side:active{transform:scale(.985)}
 #top{background:#ff2a3d}#bot{background:#1f5bff}
-.name{font-family:Anton,Impact,sans-serif;font-size:clamp(36px,10.5vw,56px);text-align:center;padding:0 18px;line-height:1;text-shadow:0 4px 0 rgba(0,0,0,.25);position:relative;z-index:2}
-.pct{font-family:Anton,Impact,sans-serif;font-size:52px;opacity:0;transform:scale(.6);transition:all .35s cubic-bezier(.2,1.6,.4,1);position:relative;z-index:2;margin-top:6px}
+.name{font-family:Anton,Impact,sans-serif;font-size:clamp(34px,9vmin,96px);text-align:center;padding:0 18px;line-height:1;text-shadow:0 4px 0 rgba(0,0,0,.25);position:relative;z-index:2}
+.pct{font-family:Anton,Impact,sans-serif;font-size:clamp(44px,9vmin,96px);opacity:0;transform:scale(.6);transition:all .35s cubic-bezier(.2,1.6,.4,1);position:relative;z-index:2;margin-top:6px}
 .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(255,255,255,.2);transition:width .8s ease-out;z-index:1}
 .revealed .pct{opacity:1;transform:scale(1)}
 .picked{border-color:#fff}
@@ -58,13 +59,33 @@ h3{font-size:13px;letter-spacing:2px;opacity:.6;font-weight:900;margin-top:4px}
 .revealed .tag.show{opacity:1}
 .check{position:absolute;top:10px;right:12px;width:30px;height:30px;border-radius:50%;background:#fff;color:#111;font-weight:900;display:none;align-items:center;justify-content:center;z-index:3}
 .picked .check{display:flex}
-#mid{position:absolute;left:50%;top:calc(50% - 6px);transform:translate(-50%,-50%);z-index:6;width:84px;height:84px;border-radius:50%;background:#121218;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Anton,Impact,sans-serif;font-size:30px;pointer-events:none}
+#mid{position:absolute;left:50%;top:calc(50% - 6px);transform:translate(-50%,-50%);z-index:6;width:clamp(76px,13vmin,130px);height:clamp(76px,13vmin,130px);border-radius:50%;background:#121218;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Anton,Impact,sans-serif;font-size:clamp(28px,5vmin,48px);pointer-events:none}
 #ring{position:absolute;inset:0}
 #banner{position:absolute;left:50%;top:calc(50% - 6px);transform:translate(-50%,-50%) scale(.6);z-index:7;font-family:Anton,Impact,sans-serif;font-size:40px;padding:10px 24px;border-radius:16px;opacity:0;transition:all .3s cubic-bezier(.2,1.6,.4,1);pointer-events:none;white-space:nowrap}
 #banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 #banner.ok{background:#19c37d}#banner.bad{background:#000}
 #hint{text-align:center;font-size:13px;opacity:0;padding-bottom:10px;font-weight:700;transition:opacity .2s}
 #hint.on{opacity:.75}
+#hud,#board,#hint{width:100%;max-width:1400px;margin-left:auto;margin-right:auto}
+@media (hover:hover){.side:hover{filter:brightness(1.1)}.chip:hover,.mode:hover{filter:brightness(1.12)}}
+.key{position:absolute;bottom:12px;font-size:12px;font-weight:900;background:rgba(0,0,0,.3);padding:4px 10px;border-radius:999px;z-index:3;display:none}
+@media (hover:hover) and (pointer:fine){.key{display:block}}
+@media (min-width:700px){
+ .logo{font-size:84px}.logo small{font-size:26px}
+ .mode b{font-size:34px}.mode div{font-size:16px}
+ .chip{font-size:16px;padding:11px 18px}
+ #hud{font-size:18px;padding:16px 24px}
+ #board{padding:0 24px 24px;gap:16px}
+ .side{border-radius:32px}
+ #banner{font-size:60px}
+ .tag{font-size:15px}
+ #end .card,#end .btn,#end .ghost{max-width:480px}
+ .big{font-size:96px}
+}
+@media (orientation:landscape) and (min-width:600px){
+ #board{flex-direction:row}
+ #mid,#banner{top:50%}
+}
 /* end */
 #end{background:linear-gradient(160deg,#ff2a3d 0%,#ff2a3d 49.6%,#1f5bff 50.4%,#1f5bff 100%);align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center}
 .card{background:rgba(0,0,0,.6);border-radius:20px;padding:18px 22px;width:100%;max-width:360px;backdrop-filter:blur(6px)}
@@ -94,8 +115,8 @@ h3{font-size:13px;letter-spacing:2px;opacity:.6;font-weight:900;margin-top:4px}
   <section id="game" class="screen">
     <div id="hud"><button id="quit" aria-label="Menu">✕</button><span id="s1"></span><span id="s2"></span><span id="s3"></span></div>
     <div id="board">
-      <div class="side" id="top"><div class="fill"></div><div class="tag">MAJORITY</div><div class="check">✓</div><div class="name"></div><div class="pct"></div></div>
-      <div class="side" id="bot"><div class="fill"></div><div class="tag">MAJORITY</div><div class="check">✓</div><div class="name"></div><div class="pct"></div></div>
+      <div class="side" id="top"><div class="fill"></div><div class="tag">MAJORITY</div><div class="check">✓</div><div class="name"></div><div class="pct"></div><div class="key">← / A</div></div>
+      <div class="side" id="bot"><div class="fill"></div><div class="tag">MAJORITY</div><div class="check">✓</div><div class="name"></div><div class="pct"></div><div class="key">→ / B</div></div>
       <div id="mid"><svg id="ring" viewBox="0 0 84 84"><circle cx="42" cy="42" r="38" fill="none" stroke="#ffd400" stroke-width="6" stroke-linecap="round" transform="rotate(-90 42 42)" stroke-dasharray="238.8" stroke-dashoffset="0" id="arc"/></svg><span id="midtxt">OR</span></div>
       <div id="banner"></div>
     </div>
@@ -226,6 +247,16 @@ $("go").onclick=start; $("again").onclick=start;
 $("toMenu").onclick=$("quit").onclick=()=>{ cancelAnimationFrame(raf); waiting=false; locked=true; screen("menu"); };
 ["top","bot"].forEach((id,i)=>$(id).addEventListener("pointerdown",()=>pick(i)));
 $("hint").addEventListener("pointerdown",cont);
+if(matchMedia("(hover:hover) and (pointer:fine)").matches) $("hint").textContent="Click or press Space to continue";
+addEventListener("keydown",e=>{
+  const on=document.querySelector(".screen.on").id, k=e.key.toLowerCase();
+  if(on==="game"){
+    if(["arrowleft","arrowup","a","1"].includes(k)){e.preventDefault();pick(0);}
+    else if(["arrowright","arrowdown","b","2"].includes(k)){e.preventDefault();pick(1);}
+    else if(k===" "||k==="enter"){e.preventDefault();cont();}
+    else if(k==="escape") $("quit").onclick();
+  } else if(k==="enter"||k===" "){ e.preventDefault(); start(); }
+});
 $("copy").onclick=async()=>{ try{ await navigator.clipboard.writeText(shareText); $("copy").textContent="Copied! Send it 🚀"; }
   catch(e){ $("copyTxt").textContent=shareText; $("copyTxt").style.display="block"; } };
 if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
