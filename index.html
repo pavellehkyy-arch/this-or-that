@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>This or That</title>
+<meta name="theme-color" content="#121218">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="This or That">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#0b0b12;color:#fff;font-family:Inter,system-ui,sans-serif;overflow:hidden}
+#app{position:relative;height:100%;max-width:520px;margin:0 auto}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.screen.on{display:flex}
+.logo{font-family:Anton,Impact,sans-serif;font-size:54px;line-height:.95;letter-spacing:1px;text-align:center;text-shadow:0 5px 0 rgba(0,0,0,.35)}
+.logo small{display:block;font-size:20px;letter-spacing:5px;opacity:.85}
+/* menu */
+#menu{background:#121218;padding:22px 16px;gap:16px;overflow-y:auto}
+#menu .logo{margin-top:8px}
+.logo .b{color:#3b74ff}.logo .r{color:#ff3b4e}
+h3{font-size:13px;letter-spacing:2px;opacity:.6;font-weight:900;margin-top:4px}
+.modes{display:flex;gap:10px}
+.mode{flex:1;border-radius:20px;padding:16px 14px;cursor:pointer;border:3px solid transparent;transition:transform .15s}
+.mode:active{transform:scale(.97)}
+.mode.sel{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.15)}
+.mode b{font-family:Anton,Impact,sans-serif;font-size:26px;font-weight:400;display:block;margin-bottom:8px;line-height:1}
+.mode div{font-size:13px;line-height:1.6;font-weight:700}
+#mRed{background:#ff2a3d}#mBlue{background:#1f5bff}
+.cats{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:#23232d;border:2px solid #2f2f3b;border-radius:999px;padding:9px 14px;font-weight:700;font-size:14px;cursor:pointer}
+.chip.sel{background:#fff;color:#111;border-color:#fff}
+.btn{font-family:Anton,Impact,sans-serif;font-size:28px;letter-spacing:1px;background:#ffd400;color:#111;border:none;border-radius:18px;padding:14px;cursor:pointer;box-shadow:0 5px 0 #b39500;width:100%}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #b39500}
+.best{font-size:13px;opacity:.7;text-align:center}
+/* game */
+#game{background:#121218}
+#hud{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-weight:900;font-size:15px;gap:8px}
+#hud span{background:#23232d;padding:6px 12px;border-radius:999px;white-space:nowrap}
+#quit{background:#23232d;border:none;color:#fff;font-size:18px;width:36px;height:36px;border-radius:50%;cursor:pointer}
+#board{flex:1;display:flex;flex-direction:column;gap:10px;padding:0 12px 12px;position:relative}
+.side{flex:1;border-radius:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;overflow:hidden;transition:filter .2s,transform .15s;border:4px solid transparent}
+.side:active{transform:scale(.985)}
+#top{background:#ff2a3d}#bot{background:#1f5bff}
+.name{font-family:Anton,Impact,sans-serif;font-size:clamp(36px,10.5vw,56px);text-align:center;padding:0 18px;line-height:1;text-shadow:0 4px 0 rgba(0,0,0,.25);position:relative;z-index:2}
+.pct{font-family:Anton,Impact,sans-serif;font-size:52px;opacity:0;transform:scale(.6);transition:all .35s cubic-bezier(.2,1.6,.4,1);position:relative;z-index:2;margin-top:6px}
+.fill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(255,255,255,.2);transition:width .8s ease-out;z-index:1}
+.revealed .pct{opacity:1;transform:scale(1)}
+.picked{border-color:#fff}
+.dim{filter:brightness(.55) saturate(.7)}
+.tag{position:absolute;top:12px;left:12px;font-weight:900;font-size:12px;background:#fff;color:#111;padding:4px 10px;border-radius:999px;opacity:0;z-index:3}
+.revealed .tag.show{opacity:1}
+.check{position:absolute;top:10px;right:12px;width:30px;height:30px;border-radius:50%;background:#fff;color:#111;font-weight:900;display:none;align-items:center;justify-content:center;z-index:3}
+.picked .check{display:flex}
+#mid{position:absolute;left:50%;top:calc(50% - 6px);transform:translate(-50%,-50%);z-index:6;width:84px;height:84px;border-radius:50%;background:#121218;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Anton,Impact,sans-serif;font-size:30px;pointer-events:none}
+#ring{position:absolute;inset:0}
+#banner{position:absolute;left:50%;top:calc(50% - 6px);transform:translate(-50%,-50%) scale(.6);z-index:7;font-family:Anton,Impact,sans-serif;font-size:40px;padding:10px 24px;border-radius:16px;opacity:0;transition:all .3s cubic-bezier(.2,1.6,.4,1);pointer-events:none;white-space:nowrap}
+#banner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#banner.ok{background:#19c37d}#banner.bad{background:#000}
+#hint{text-align:center;font-size:13px;opacity:0;padding-bottom:10px;font-weight:700;transition:opacity .2s}
+#hint.on{opacity:.75}
+/* end */
+#end{background:linear-gradient(160deg,#ff2a3d 0%,#ff2a3d 49.6%,#1f5bff 50.4%,#1f5bff 100%);align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center}
+.card{background:rgba(0,0,0,.6);border-radius:20px;padding:18px 22px;width:100%;max-width:360px;backdrop-filter:blur(6px)}
+.big{font-family:Anton,Impact,sans-serif;font-size:64px;line-height:1}
+.sub{font-size:15px;font-weight:700;margin-top:6px}
+.ghost{font-size:15px;background:rgba(0,0,0,.35);color:#fff;border:2px solid #fff;border-radius:999px;padding:10px 22px;cursor:pointer;font-weight:700;max-width:360px;width:100%}
+#copyTxt{font-size:13px;opacity:.85;display:none;user-select:text}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <section id="menu" class="screen on">
+    <div class="logo"><small>THIS OR THAT</small><span class="b">BRAND</span> <span class="r">WARS</span></div>
+    <h3>GAME MODE</h3>
+    <div class="modes">
+      <div class="mode sel" id="mRed" data-m="guess"><b>Guess the Majority</b><div>✓ Pick what most chose<br>✓ Points & streaks<br>✓ 5 sec timer, 3 lives</div></div>
+      <div class="mode" id="mBlue" data-m="vote"><b>Just Vote</b><div>✓ Pick your favourite<br>✓ See what others chose<br>✓ No timer, chill</div></div>
+    </div>
+    <h3>CATEGORY</h3>
+    <div class="cats" id="cats"></div>
+    <div style="flex:1"></div>
+    <button class="btn" id="go">PLAY</button>
+    <div class="best" id="best"></div>
+  </section>
+
+  <section id="game" class="screen">
+    <div id="hud"><button id="quit" aria-label="Menu">✕</button><span id="s1"></span><span id="s2"></span><span id="s3"></span></div>
+    <div id="board">
+      <div class="side" id="top"><div class="fill"></div><div class="tag">MAJORITY</div><div class="check">✓</div><div class="name"></div><div class="pct"></div></div>
+      <div class="side" id="bot"><div class="fill"></div><div class="tag">MAJORITY</div><div class="check">✓</div><div class="name"></div><div class="pct"></div></div>
+      <div id="mid"><svg id="ring" viewBox="0 0 84 84"><circle cx="42" cy="42" r="38" fill="none" stroke="#ffd400" stroke-width="6" stroke-linecap="round" transform="rotate(-90 42 42)" stroke-dasharray="238.8" stroke-dashoffset="0" id="arc"/></svg><span id="midtxt">OR</span></div>
+      <div id="banner"></div>
+    </div>
+    <div id="hint">Tap anywhere to continue</div>
+  </section>
+
+  <section id="end" class="screen">
+    <div class="logo" id="endTitle">GAME OVER</div>
+    <div class="card"><div class="big" id="final">0</div><div class="sub" id="endmsg"></div></div>
+    <button class="btn" id="again" style="max-width:360px">PLAY AGAIN</button>
+    <button class="ghost" id="copy">⚔️ Challenge a friend</button>
+    <div id="copyTxt"></div>
+    <button class="ghost" id="toMenu">Menu</button>
+  </section>
+</div>
+
+<script>
+// ===== EDIT HERE =====
+const CHANNEL = "This or That";   // shown in the challenge text
+// [A, B, % who picked A]  -> B is always 100 - A. Swap in real numbers from your polls/comments.
+const DATA = {
+ "🍔 Food": [["McDonald's","Burger King",64],["KFC","Popeyes",52],["Five Guys","Shake Shack",56],["Taco Bell","Chipotle",51],["Subway","Domino's",39],["Oreo","Chips Ahoy!",74],["Kit Kat","Snickers",53],["Hershey's","Cadbury",45],["Takis","Hot Cheetos",49],["Doritos","Pringles",50],["Krispy Kreme","Chupa Chups",69],["Starbucks","Dunkin'",58],["Nutella","Peanut Butter",61],["Wendy's","Chick-fil-A",38]],
+ "🥤 Drinks": [["Coca-Cola","Pepsi",62],["Mountain Dew","Dr Pepper",47],["Gatorade","Prime",71],["Red Bull","Monster",52],["Sprite","Fanta",57],["Coke Zero","Diet Coke",63],["Lipton","Arizona",44],["7UP","Sprite",31]],
+ "📱 Tech": [["iPhone","Samsung",57],["AirPods","Beats",68],["Apple Watch","Fitbit",77],["Google","ChatGPT",48],["Netflix","YouTube",41],["Spotify","Apple Music",66],["TikTok","Instagram",54],["Snapchat","WhatsApp",44],["Disney+","Netflix",37],["Uber Eats","DoorDash",50],["MacBook","Windows laptop",55]],
+ "🚗 Cars": [["Audi","Mercedes",46],["Bugatti","Porsche",55],["Jeep","Land Rover",53],["Lamborghini","Ferrari",48],["Tesla","BMW",51],["Toyota","Honda",54],["Ford Mustang","Chevy Camaro",59],["Rolls-Royce","Bentley",57]],
+ "🎮 Games": [["PlayStation","Xbox",63],["Nintendo Switch","Steam Deck",59],["Roblox","Fortnite",46],["Minecraft","Roblox",58],["Nintendo","PlayStation",43],["FIFA","NBA 2K",56],["GTA","Call of Duty",61],["Mario","Sonic",64]],
+ "👟 Fashion & Sport": [["Nike","Adidas",61],["Puma","New Balance",42],["Converse","Vans",47],["Jordan","Yeezy",66],["Under Armour","Nike",23],["Crocs","Slides",41],["Gucci","Louis Vuitton",48],["Rolex","Apple Watch",58]]
+};
+const ROUND_MS = 5000;
+// =====================
+
+const ALL = "🔥 All";
+const $ = id => document.getElementById(id);
+let mode="guess", cat=ALL, deck, idx, score, streak, lives, round, t0, locked, waiting, raf, votesMaj;
+let best = 0; try { best = +localStorage.getItem("bw_best") || 0 } catch(e){}
+const showBest = () => $("best").textContent = best ? `🏆 Your best: ${best} pts` : "";
+showBest();
+
+// menu
+const cats=$("cats");
+[ALL, ...Object.keys(DATA)].forEach(c=>{ const b=document.createElement("button"); b.className="chip"+(c===cat?" sel":""); b.textContent=c;
+  b.onclick=()=>{cat=c; cats.querySelectorAll(".chip").forEach(x=>x.classList.toggle("sel",x===b));}; cats.appendChild(b); });
+document.querySelectorAll(".mode").forEach(m=>m.onclick=()=>{ mode=m.dataset.m; document.querySelectorAll(".mode").forEach(x=>x.classList.toggle("sel",x===m)); });
+
+let actx;
+function beep(f,d,v=.15,type="square"){ try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+  const o=actx.createOscillator(), g=actx.createGain(); o.type=type; o.frequency.value=f; g.gain.value=v;
+  o.connect(g).connect(actx.destination); o.start(); g.gain.exponentialRampToValueAtTime(.001, actx.currentTime+d); o.stop(actx.currentTime+d);}catch(e){} }
+
+const screen = id => document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id===id));
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]} return a; }
+
+function start(){
+  const pool = cat===ALL ? Object.values(DATA).flat() : DATA[cat];
+  deck = shuffle(pool.map(p => Math.random()<.5 ? [p[0],p[1],p[2]] : [p[1],p[0],100-p[2]]));
+  idx=0; score=0; streak=0; lives=3; round=0; votesMaj=0;
+  $("mid").style.display=""; updateHud(); screen("game"); next();
+}
+function updateHud(){
+  if(mode==="guess"){
+    $("s1").textContent = `${score} pts`;
+    $("s2").textContent = streak>=2 ? `🔥 ${streak}` : `Round ${round}`;
+    $("s3").textContent = "❤️".repeat(lives)+"🖤".repeat(3-lives);
+  } else {
+    $("s1").textContent = `${round} / ${deck.length}`;
+    $("s2").textContent = cat;
+    $("s3").textContent = `👥 ${round>1||waiting ? Math.round(100*votesMaj/Math.max(1,round - (waiting?0:1))) : 0}% with the crowd`;
+  }
+}
+function next(){
+  if(idx>=deck.length){ if(mode==="vote") return end(); deck=shuffle(deck); idx=0; }
+  round++; waiting=false; locked=false;
+  const [a,b] = deck[idx];
+  ["top","bot"].forEach((id,i)=>{ const s=$(id); s.className="side"; s.querySelector(".name").textContent=i?b:a;
+    s.querySelector(".pct").textContent=""; s.querySelector(".fill").style.width="0"; s.querySelector(".tag").className="tag"; });
+  $("banner").className=""; $("hint").classList.remove("on");
+  $("midtxt").textContent="OR"; $("arc").style.display = mode==="guess"?"":"none";
+  updateHud();
+  if(mode==="guess"){ t0=performance.now(); $("midtxt").textContent=""; tick(); }
+}
+function tick(){
+  const left = Math.max(0, ROUND_MS-(performance.now()-t0));
+  const sec = Math.ceil(left/1000);
+  if($("midtxt").textContent != sec && sec>0){ $("midtxt").textContent=sec; beep(sec<=2?1100:800,.05,.08); }
+  $("arc").style.strokeDashoffset = 238.8*(1-left/ROUND_MS);
+  $("arc").style.stroke = left<2000 ? "#ff2a3d" : "#ffd400";
+  if(left<=0){ pick(-1); return; }
+  raf=requestAnimationFrame(tick);
+}
+function pick(i){
+  if(waiting){ cont(); return; }
+  if(locked) return; locked=true; cancelAnimationFrame(raf);
+  const pa = deck[idx][2]; const pcts=[pa,100-pa]; const maj = pa>=50?0:1;
+  [$("top"),$("bot")].forEach((s,k)=>{ s.classList.add("revealed"); if(i>=0) s.classList.add(k===i?"picked":"dim");
+    s.querySelector(".fill").style.width=pcts[k]+"%"; if(k===maj) s.querySelector(".tag").classList.add("show"); countUp(s.querySelector(".pct"),pcts[k]); });
+  $("midtxt").textContent="OR"; $("arc").style.display="none";
+  const ok = i===maj, ban=$("banner");
+  if(mode==="guess"){
+    if(ok){ score++; streak++; ban.textContent = streak>=3 ? `🔥 ${streak} STREAK!` : "CORRECT!"; ban.className="show ok"; beep(660,.12,.15,"triangle"); setTimeout(()=>beep(990,.18,.15,"triangle"),110); }
+    else { streak=0; lives--; ban.textContent = i<0 ? "TOO SLOW!" : "NOPE!"; ban.className="show bad"; beep(180,.35,.18,"sawtooth"); }
+  } else {
+    if(ok) votesMaj++; beep(ok?740:440,.12,.12,"triangle");
+  }
+  idx++; waiting=true;
+  setTimeout(()=>{ updateHud(); $("hint").classList.add("on"); }, 500);
+  if(mode==="guess") setTimeout(()=>{ if(waiting) cont(); }, 1900);
+}
+function cont(){ if(!waiting) return; waiting=false; if(mode==="guess" && lives<=0) end(); else next(); }
+function countUp(el,to){ const st=performance.now(); (function f(t){ const n=Math.min(to,Math.round(to*Math.max(0,(t-st)/600))); el.textContent=n+"%"; if(n<to) requestAnimationFrame(f); })(st); }
+
+let shareText="";
+function end(){
+  $("copyTxt").style.display="none"; $("copy").textContent="⚔️ Challenge a friend";
+  if(mode==="guess"){
+    if(score>best){ best=score; try{localStorage.setItem("bw_best",best)}catch(e){} }
+    $("endTitle").textContent="GAME OVER"; $("final").textContent=score;
+    $("endmsg").textContent = (score>=15?"Brand genius 🧠":score>=8?"You know the people 👀":score>=4?"Not bad!":"The people disagree with you 😅") + (score===best&&score>0?" · NEW BEST!":"");
+    shareText = `I scored ${score} in Brand Wars ${cat} 🔴🔵 Can you guess what most people pick? Follow ${CHANNEL} for more!`;
+  } else {
+    const p = Math.round(100*votesMaj/Math.max(1,round));
+    $("endTitle").textContent="DONE!"; $("final").textContent=p+"%";
+    $("endmsg").textContent = p>=70?"You think like everyone else 🐑":p>=45?"Half normal, half chaos 😏":"You're one of a kind 🦄";
+    shareText = `I agree with the crowd ${p}% of the time in Brand Wars 🔴🔵 What about you? Follow ${CHANNEL} for more!`;
+  }
+  showBest(); screen("end");
+}
+$("go").onclick=start; $("again").onclick=start;
+$("toMenu").onclick=$("quit").onclick=()=>{ cancelAnimationFrame(raf); waiting=false; locked=true; screen("menu"); };
+["top","bot"].forEach((id,i)=>$(id).addEventListener("pointerdown",()=>pick(i)));
+$("hint").addEventListener("pointerdown",cont);
+$("copy").onclick=async()=>{ try{ await navigator.clipboard.writeText(shareText); $("copy").textContent="Copied! Send it 🚀"; }
+  catch(e){ $("copyTxt").textContent=shareText; $("copyTxt").style.display="block"; } };
+if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
