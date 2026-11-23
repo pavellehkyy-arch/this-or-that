@@ -93,23 +93,41 @@ h3{font-size:13px;letter-spacing:2px;opacity:.6;font-weight:900;margin-top:4px}
 .sub{font-size:15px;font-weight:700;margin-top:6px}
 .ghost{font-size:15px;background:rgba(0,0,0,.35);color:#fff;border:2px solid #fff;border-radius:999px;padding:10px 22px;cursor:pointer;font-weight:700;max-width:360px;width:100%}
 .legal{font-size:11px;line-height:1.45;opacity:.45;text-align:center;max-width:620px}
+.rank{background:#1c1c25;border-radius:16px;padding:12px 14px}
+.rrow{display:flex;justify-content:space-between;align-items:center;font-size:15px;gap:8px}
+.rrow span{font-size:12px;opacity:.6;font-weight:700}
+.bar{height:8px;background:#2a2a36;border-radius:9px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff2a3d,#ffd400,#1f5bff);border-radius:9px;transition:width .6s}
+.daily{background:linear-gradient(90deg,#ffd400,#ffb000);color:#111;border:none;border-radius:18px;padding:12px;font-family:Anton,Impact,sans-serif;font-size:26px;cursor:pointer;box-shadow:0 5px 0 #b38600;display:flex;flex-direction:column;align-items:center;gap:2px}
+.daily small{font-family:Inter,sans-serif;font-size:13px;font-weight:700}
+.daily:active{transform:translateY(4px);box-shadow:0 1px 0 #b38600}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+.pulse{animation:pulse 1.6s ease-in-out infinite}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+.shake{animation:shake .35s}
+#banner.take{background:#ffd400;color:#111;font-size:clamp(22px,4.5vmin,40px)}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:50}
+#endmsg{white-space:pre-line}
 #copyTxt{font-size:13px;opacity:.85;display:none;user-select:text}
 </style>
 </head>
 <body>
+<canvas id="fx"></canvas>
 <div id="app">
 
   <section id="menu" class="screen on">
     <div class="logo"><small>THIS OR THAT</small><span class="b">BRAND</span> <span class="r">WARS</span></div>
+    <div class="rank"><div class="rrow"><b id="rankName"></b><span id="rankNext"></span></div><div class="bar"><i id="rankBar"></i></div></div>
+    <button class="daily" id="dailyBtn"><span id="dailyTop"></span><small id="dailySub"></small></button>
     <h3>GAME MODE</h3>
     <div class="modes">
-      <div class="mode sel" id="mRed" data-m="guess"><b>Guess the Majority</b><div>✓ Pick what most chose<br>✓ Points & streaks<br>✓ 5 sec timer, 3 lives</div></div>
+      <div class="mode sel" id="mRed" data-m="guess"><b>Guess the Majority</b><div>✓ Pick what most chose<br>✓ Speed bonus & x3 combos<br>✓ 5 sec timer, 3 lives</div></div>
       <div class="mode" id="mBlue" data-m="vote"><b>Just Vote</b><div>✓ Pick your favourite<br>✓ See what others chose<br>✓ No timer, chill</div></div>
     </div>
     <h3>CATEGORY</h3>
     <div class="cats" id="cats"></div>
     <div style="flex:1"></div>
-    <button class="btn" id="go">PLAY</button>
+    <button class="btn pulse" id="go">PLAY</button>
     <div class="best" id="best"></div>
     <div class="legal">Fan-made game for fun. Not affiliated with, sponsored or endorsed by any brand, team or person shown. All names and trademarks belong to their owners. Percentages are estimates, not official survey results. No personal data is collected.</div>
   </section>
@@ -139,7 +157,7 @@ h3{font-size:13px;letter-spacing:2px;opacity:.6;font-weight:900;margin-top:4px}
 <script>
 // ===== EDIT HERE =====
 const CHANNEL = "This or That";   // shown in the challenge text
-// [A, B, % who picked A]  -> B is always 100 - A. Swap in real numbers from your polls/comments.
+// [A, B, % who picked A]  -> B is always 100 - A.
 const DATA = {
  "🍔 Food": [["McDonald's","Burger King",64],["KFC","Popeyes",52],["Five Guys","Shake Shack",56],["Taco Bell","Chipotle",51],["Subway","Domino's",39],["Oreo","Chips Ahoy!",74],["Kit Kat","Snickers",53],["Hershey's","Cadbury",45],["Takis","Hot Cheetos",49],["Doritos","Pringles",50],["Krispy Kreme","Chupa Chups",69],["Starbucks","Dunkin'",58],["Nutella","Peanut Butter",61],["Wendy's","Chick-fil-A",38]],
  "🥤 Drinks": [["Coca-Cola","Pepsi",62],["Mountain Dew","Dr Pepper",47],["Gatorade","Prime",71],["Red Bull","Monster",52],["Sprite","Fanta",57],["Coke Zero","Diet Coke",63],["Lipton","Arizona",44],["7UP","Sprite",31]],
@@ -154,15 +172,35 @@ const DATA = {
  "🎬 Movies & Shows": [["Marvel","DC",64],["Harry Potter","Star Wars",57],["Stranger Things","Wednesday",61],["Spider-Man","Batman",52],["Iron Man","Captain America",63],["Shrek","Minions",58],["Disney","Pixar",46],["The Simpsons","Family Guy",55],["Squid Game","Money Heist",53],["Barbie","Oppenheimer",47]],
  "🌍 Travel": [["Paris","London",48],["New York","Los Angeles",59],["Dubai","Maldives",44],["Japan","Italy",51],["Beach","Mountains",57],["Disneyland","Universal Studios",61],["Summer","Winter",64],["Plane","Road trip",55],["Hotel","Camping",72],["Spain","Greece",52]]
 };
-const ROUND_MS = 5000;
+const ROUND_MS = 5000, DAILY_N = 10;
 // =====================
 
 const ALL = "🔥 All";
 const $ = id => document.getElementById(id);
-let mode="guess", cat=ALL, deck, idx, score, streak, lives, round, t0, locked, waiting, raf, votesMaj;
-let best = 0; try { best = +localStorage.getItem("bw_best") || 0 } catch(e){}
-const showBest = () => $("best").textContent = best ? `🏆 Your best: ${best} pts` : "";
-showBest();
+const store = { get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v) }catch(e){ return d } }, set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)) }catch(e){} } };
+let mode="guess", gm="guess", cat=ALL, deck, idx, score, correct, streak, lives, round, t0, locked, waiting, raf, votesMaj, results, isDaily=false, shareText="";
+let best = store.get("bw_best2",0), xp = store.get("bw_xp",0), daily = store.get("bw_daily",{last:null,streak:0,done:{}});
+const RANKS=[[0,"🐣 Rookie"],[10,"🙂 Casual"],[30,"😎 Trend Spotter"],[60,"🧠 Crowd Reader"],[120,"🔮 Mind Reader"],[250,"👑 Brand Legend"]];
+const ymd = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const today = () => ymd(new Date());
+const yesterday = () => { const d=new Date(); d.setDate(d.getDate()-1); return ymd(d); };
+function seeded(str){ let h=1779033703^str.length; for(let i=0;i<str.length;i++){ h=Math.imul(h^str.charCodeAt(i),3432918353); h=h<<13|h>>>19; }
+  return function(){ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); return ((h^=h>>>16)>>>0)/4294967296; }; }
+function shuffle(a,rnd=Math.random){ for(let i=a.length-1;i>0;i--){const j=rnd()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]} return a; }
+const dayStreak = () => (daily.last===today()||daily.last===yesterday()) ? daily.streak : 0;
+
+function renderMenu(){
+  let i=0; while(i+1<RANKS.length && xp>=RANKS[i+1][0]) i++;
+  const cur=RANKS[i], nx=RANKS[i+1];
+  $("rankName").textContent = cur[1];
+  $("rankNext").textContent = nx ? `${nx[0]-xp} correct to ${nx[1]}` : "Max rank!";
+  $("rankBar").style.width = (nx ? (xp-cur[0])/(nx[0]-cur[0])*100 : 100) + "%";
+  const done = daily.done[today()], ds = dayStreak();
+  $("dailyTop").textContent = done ? "✅ DAILY DONE" : "📅 DAILY CHALLENGE";
+  $("dailySub").textContent = done ? `${done.grid} ${done.correct}/${DAILY_N} · new one tomorrow` : `Same ${DAILY_N} questions for everyone today` + (ds ? ` · 🔥 ${ds}-day streak` : "");
+  $("dailyBtn").classList.toggle("pulse", !done);
+  $("best").textContent = best ? `🏆 Your best: ${best} pts` : "";
+}
 
 // menu
 const cats=$("cats");
@@ -174,37 +212,59 @@ let actx;
 function beep(f,d,v=.15,type="square"){ try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)();
   const o=actx.createOscillator(), g=actx.createGain(); o.type=type; o.frequency.value=f; g.gain.value=v;
   o.connect(g).connect(actx.destination); o.start(); g.gain.exponentialRampToValueAtTime(.001, actx.currentTime+d); o.stop(actx.currentTime+d);}catch(e){} }
+const buzz = p => { try{ navigator.vibrate && navigator.vibrate(p) }catch(e){} };
 
-const screen = id => document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id===id));
-function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]} return a; }
+// confetti
+const fx=$("fx"), ctx=fx.getContext("2d"); let parts=[], fxOn=false;
+function confetti(n=120){
+  fx.width=innerWidth; fx.height=innerHeight;
+  const cols=["#ff2a3d","#1f5bff","#ffd400","#ffffff","#19c37d"];
+  for(let i=0;i<n;i++) parts.push({x:fx.width/2+(Math.random()-.5)*fx.width*.3,y:fx.height*.45,vx:(Math.random()-.5)*14,vy:-Math.random()*16-4,r:Math.random()*6+4,c:cols[i%5],a:Math.random()*6,life:90+Math.random()*40});
+  if(!fxOn){ fxOn=true; requestAnimationFrame(fxLoop); }
+}
+function fxLoop(){
+  ctx.clearRect(0,0,fx.width,fx.height);
+  parts=parts.filter(p=>p.life-->0);
+  for(const p of parts){ p.vy+=.45; p.vx*=.99; p.x+=p.vx; p.y+=p.vy; p.a+=.2; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a); ctx.fillStyle=p.c; ctx.fillRect(-p.r/2,-p.r/3,p.r,p.r*.66); ctx.restore(); }
+  if(parts.length) requestAnimationFrame(fxLoop); else { fxOn=false; ctx.clearRect(0,0,fx.width,fx.height); }
+}
 
-function start(){
-  const pool = cat===ALL ? Object.values(DATA).flat() : DATA[cat];
-  deck = shuffle(pool.map(p => Math.random()<.5 ? [p[0],p[1],p[2]] : [p[1],p[0],100-p[2]]));
-  idx=0; score=0; streak=0; lives=3; round=0; votesMaj=0;
-  $("mid").style.display=""; updateHud(); screen("game"); next();
+const screen = id => { document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id===id)); if(id==="menu") renderMenu(); };
+
+function start(d){
+  isDaily = !!d;
+  if(isDaily && daily.done[today()]) return showDailyDone();
+  const rnd = isDaily ? seeded("tot-"+today()) : Math.random;
+  const pool = (isDaily||cat===ALL) ? Object.values(DATA).flat() : DATA[cat];
+  deck = shuffle(pool.map(p => rnd()<.5 ? [p[0],p[1],p[2]] : [p[1],p[0],100-p[2]]), rnd);
+  if(isDaily) deck = deck.slice(0,DAILY_N);
+  gm = isDaily ? "guess" : mode;
+  idx=0; score=0; correct=0; streak=0; lives=3; round=0; votesMaj=0; results=[];
+  screen("game"); next();
 }
 function updateHud(){
-  if(mode==="guess"){
+  if(gm==="guess"){
     $("s1").textContent = `${score} pts`;
-    $("s2").textContent = streak>=2 ? `🔥 ${streak}` : `Round ${round}`;
-    $("s3").textContent = "❤️".repeat(lives)+"🖤".repeat(3-lives);
+    const mult = streak>=5?3:streak>=3?2:1;
+    $("s2").textContent = streak>=2 ? `🔥 ${streak}${mult>1?"  x"+mult:""}` : (isDaily ? "📅 Daily" : `Round ${round}`);
+    $("s3").textContent = isDaily ? `${Math.min(round,DAILY_N)} / ${DAILY_N}` : "❤️".repeat(lives)+"🖤".repeat(3-lives);
   } else {
     $("s1").textContent = `${round} / ${deck.length}`;
     $("s2").textContent = cat;
-    $("s3").textContent = `👥 ${round>1||waiting ? Math.round(100*votesMaj/Math.max(1,round - (waiting?0:1))) : 0}% with the crowd`;
+    const answered = round - (waiting?0:1);
+    $("s3").textContent = `👥 ${answered>0 ? Math.round(100*votesMaj/answered) : 0}% with the crowd`;
   }
 }
 function next(){
-  if(idx>=deck.length){ if(mode==="vote") return end(); deck=shuffle(deck); idx=0; }
+  if(idx>=deck.length){ if(gm==="vote"||isDaily) return end(); deck=shuffle(deck); idx=0; }
   round++; waiting=false; locked=false;
   const [a,b] = deck[idx];
   ["top","bot"].forEach((id,i)=>{ const s=$(id); s.className="side"; s.querySelector(".name").textContent=i?b:a;
     s.querySelector(".pct").textContent=""; s.querySelector(".fill").style.width="0"; s.querySelector(".tag").className="tag"; });
   $("banner").className=""; $("hint").classList.remove("on");
-  $("midtxt").textContent="OR"; $("arc").style.display = mode==="guess"?"":"none";
+  $("midtxt").textContent="OR"; $("arc").style.display = gm==="guess"?"":"none";
   updateHud();
-  if(mode==="guess"){ t0=performance.now(); $("midtxt").textContent=""; tick(); }
+  if(gm==="guess"){ t0=performance.now(); $("midtxt").textContent=""; tick(); }
 }
 function tick(){
   const left = Math.max(0, ROUND_MS-(performance.now()-t0));
@@ -218,44 +278,78 @@ function tick(){
 function pick(i){
   if(waiting){ cont(); return; }
   if(locked) return; locked=true; cancelAnimationFrame(raf);
-  const pa = deck[idx][2]; const pcts=[pa,100-pa]; const maj = pa>=50?0:1;
+  const left = Math.max(0, ROUND_MS-(performance.now()-t0));
+  const pa = deck[idx][2], pcts=[pa,100-pa], maj = pa>=50?0:1, close = Math.abs(pa-50)<=3;
   [$("top"),$("bot")].forEach((s,k)=>{ s.classList.add("revealed"); if(i>=0) s.classList.add(k===i?"picked":"dim");
     s.querySelector(".fill").style.width=pcts[k]+"%"; if(k===maj) s.querySelector(".tag").classList.add("show"); countUp(s.querySelector(".pct"),pcts[k]); });
   $("midtxt").textContent="OR"; $("arc").style.display="none";
-  const ok = i===maj, ban=$("banner");
-  if(mode==="guess"){
-    if(ok){ score++; streak++; ban.textContent = streak>=3 ? `🔥 ${streak} STREAK!` : "CORRECT!"; ban.className="show ok"; beep(660,.12,.15,"triangle"); setTimeout(()=>beep(990,.18,.15,"triangle"),110); }
-    else { streak=0; lives--; ban.textContent = i<0 ? "TOO SLOW!" : "NOPE!"; ban.className="show bad"; beep(180,.35,.18,"sawtooth"); }
+  const ok = i>=0 && (i===maj || close), ban=$("banner");
+  if(gm==="guess"){
+    if(ok){
+      correct++; streak++; xp++;
+      const mult = streak>=5?3:streak>=3?2:1, pts = Math.round(100+100*left/ROUND_MS)*mult;
+      score += pts;
+      ban.textContent = close ? `TOO CLOSE! +${pts}` : mult>1 ? `🔥 x${mult}  +${pts}` : `CORRECT! +${pts}`;
+      ban.className="show ok"; beep(660,.12,.15,"triangle"); setTimeout(()=>beep(990,.18,.15,"triangle"),110); buzz(25);
+      if(streak===3||streak===5||streak%10===0) confetti(streak>=5?160:90);
+    } else {
+      streak=0; if(!isDaily) lives--;
+      ban.textContent = i<0 ? "TOO SLOW!" : "NOPE!"; ban.className="show bad"; beep(180,.35,.18,"sawtooth"); buzz([60,40,60]);
+      const bd=$("board"); bd.classList.remove("shake"); void bd.offsetWidth; bd.classList.add("shake");
+    }
+    results.push(ok?"🟩":"🟥");
   } else {
-    if(ok) votesMaj++; beep(ok?740:440,.12,.12,"triangle");
+    if(ok) votesMaj++;
+    const mine = pcts[i];
+    ban.textContent = mine<35 ? `🌶️ HOT TAKE! Only ${mine}% agree` : mine>65 ? `🐑 ${mine}% agree with you` : `⚖️ ${mine}% agree with you`;
+    ban.className="show take"; beep(mine<35?520:740,.12,.12,"triangle");
+    if(mine<35) buzz(30);
   }
+  store.set("bw_xp",xp);
   idx++; waiting=true;
   setTimeout(()=>{ updateHud(); $("hint").classList.add("on"); }, 500);
-  if(mode==="guess") setTimeout(()=>{ if(waiting) cont(); }, 1900);
+  if(gm==="guess") setTimeout(()=>{ if(waiting) cont(); }, 1900);
 }
-function cont(){ if(!waiting) return; waiting=false; if(mode==="guess" && lives<=0) end(); else next(); }
+function cont(){ if(!waiting) return; waiting=false; if(gm==="guess" && !isDaily && lives<=0) end(); else next(); }
 function countUp(el,to){ const st=performance.now(); (function f(t){ const n=Math.min(to,Math.round(to*Math.max(0,(t-st)/600))); el.textContent=n+"%"; if(n<to) requestAnimationFrame(f); })(st); }
 
-let shareText="";
+const link = () => location.href.split("#")[0];
+function showDailyDone(){
+  const t=today(), r=daily.done[t];
+  $("endTitle").textContent="DAILY DONE"; $("final").textContent=`${r.correct}/${DAILY_N}`;
+  $("endmsg").textContent=`${r.grid}\n${r.score} pts · 🔥 ${dayStreak()}-day streak · new one tomorrow`;
+  shareText=`This or That – Daily ${t}\n${r.grid} ${r.correct}/${DAILY_N}\n🔥 ${dayStreak()}-day streak. Can you beat me?\n${link()}`;
+  $("copyTxt").style.display="none"; $("copy").textContent="⚔️ Challenge a friend"; $("again").textContent="PLAY MORE"; screen("end");
+}
 function end(){
-  $("copyTxt").style.display="none"; $("copy").textContent="⚔️ Challenge a friend";
-  if(mode==="guess"){
-    if(score>best){ best=score; try{localStorage.setItem("bw_best",best)}catch(e){} }
-    $("endTitle").textContent="GAME OVER"; $("final").textContent=score;
-    $("endmsg").textContent = (score>=15?"Brand genius 🧠":score>=8?"You know the people 👀":score>=4?"Not bad!":"The people disagree with you 😅") + (score===best&&score>0?" · NEW BEST!":"");
-    shareText = `I scored ${score} in Brand Wars ${cat} 🔴🔵 Can you guess what most people pick? Follow ${CHANNEL} for more!`;
+  if(gm==="guess" && isDaily){
+    const t=today();
+    if(!daily.done[t]){ daily.streak = daily.last===yesterday() ? daily.streak+1 : 1; daily.last=t; daily.done={[t]:{score,correct,grid:results.join("")}}; store.set("bw_daily",daily); }
+    if(correct>=7) setTimeout(()=>confetti(180),200);
+    return showDailyDone();
+  }
+  $("copyTxt").style.display="none"; $("copy").textContent="⚔️ Challenge a friend"; $("again").textContent="PLAY AGAIN";
+  if(gm==="guess"){
+    const nb = score>best && score>0;
+    if(nb){ best=score; store.set("bw_best2",best); setTimeout(()=>confetti(200),200); }
+    $("endTitle").textContent = nb ? "NEW BEST!" : "GAME OVER"; $("final").textContent=score;
+    $("endmsg").textContent = `${correct} correct · ` + (correct>=15?"Brand genius 🧠":correct>=8?"You know the people 👀":correct>=4?"Not bad!":"The people disagree with you 😅");
+    shareText = `I scored ${score} pts in This or That – Brand Wars ${cat} 🔴🔵 Can you beat me?\n${link()}`;
   } else {
     const p = Math.round(100*votesMaj/Math.max(1,round));
     $("endTitle").textContent="DONE!"; $("final").textContent=p+"%";
     $("endmsg").textContent = p>=70?"You think like everyone else 🐑":p>=45?"Half normal, half chaos 😏":"You're one of a kind 🦄";
-    shareText = `I agree with the crowd ${p}% of the time in Brand Wars 🔴🔵 What about you? Follow ${CHANNEL} for more!`;
+    shareText = `I agree with the crowd ${p}% of the time in This or That 🔴🔵 What about you?\n${link()}`;
   }
-  showBest(); screen("end");
+  screen("end");
 }
-$("go").onclick=start; $("again").onclick=start;
+$("go").onclick=()=>start(false); $("again").onclick=()=>start(isDaily && !daily.done[today()]);
+$("dailyBtn").onclick=()=>start(true);
 $("toMenu").onclick=$("quit").onclick=()=>{ cancelAnimationFrame(raf); waiting=false; locked=true; screen("menu"); };
 ["top","bot"].forEach((id,i)=>$(id).addEventListener("pointerdown",()=>pick(i)));
 $("hint").addEventListener("pointerdown",cont);
+$("copy").onclick=async()=>{ try{ await navigator.clipboard.writeText(shareText+`\nFollow ${CHANNEL} for more!`); $("copy").textContent="Copied! Send it 🚀"; }
+  catch(e){ $("copyTxt").textContent=shareText; $("copyTxt").style.display="block"; } };
 if(matchMedia("(hover:hover) and (pointer:fine)").matches) $("hint").textContent="Click or press Space to continue";
 addEventListener("keydown",e=>{
   const on=document.querySelector(".screen.on").id, k=e.key.toLowerCase();
@@ -264,10 +358,9 @@ addEventListener("keydown",e=>{
     else if(["arrowright","arrowdown","b","2"].includes(k)){e.preventDefault();pick(1);}
     else if(k===" "||k==="enter"){e.preventDefault();cont();}
     else if(k==="escape") $("quit").onclick();
-  } else if(k==="enter"||k===" "){ e.preventDefault(); start(); }
+  } else if(k==="enter"||k===" "){ e.preventDefault(); start(false); }
 });
-$("copy").onclick=async()=>{ try{ await navigator.clipboard.writeText(shareText); $("copy").textContent="Copied! Send it 🚀"; }
-  catch(e){ $("copyTxt").textContent=shareText; $("copyTxt").style.display="block"; } };
+renderMenu();
 if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script>
 </body>
